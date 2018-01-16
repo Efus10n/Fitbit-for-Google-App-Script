@@ -1,7 +1,8 @@
 // This script will pull down your fitbit data
 // and push it into a spreadsheet
 // Units are metric (kg, km) unless otherwise noted
-// Suggestions/comments/improvements?  Let me know loghound@gmail.com
+// Original script by: loghound@gmail.com
+// Modifications for Oauth2 v24 - Efus10n
 //
 //
 /**** Length of time to look at.
@@ -25,11 +26,11 @@ var CLIENT_ID_PROPERTY_NAME = "fitbitClientID";
 var CONSUMER_SECRET_PROPERTY_NAME = "fitbitConsumerSecret";
 
 /**
- * Key of Project.
+ * Script ID
  * @type {String}
  * @const
  */
-var PROJECT_KEY_PROPERTY_NAME = "projectKey";
+var SCRIPT_ID_PROPERTY_NAME = "scriptID";
 
 
 /**
@@ -74,7 +75,8 @@ function refreshTimeSeries() {
   Logger.log('Refreshing timeseries data...');
   var user = authorize().user;
   Logger.log(user)
-  var doc = SpreadsheetApp.getActiveSpreadsheet()
+  //var doc = SpreadsheetApp.getActiveSpreadsheet()
+  var doc = SpreadsheetApp.openById("1AtIqKNN8yLddM7Hyx8GF44EVCd445Zm92t9IsLEec-E")
   doc.setFrozenRows(2);
   // header rows
   doc.getRange("a1").setValue(user.displayName);
@@ -88,7 +90,7 @@ function refreshTimeSeries() {
   doc.getRange("d1").setValue("Period: " + getPeriod());
   doc.getRange("e1").setValue("=image(\"" + user.avatar + "\";1)");
 
-  // get inspired here http://wiki.fitbit.com/display/API/API-Get-Time-Series
+																			 
   var activities = getLoggables();
   for ( var activity in activities) {
     Logger.log('Refreshing ' + activity)
@@ -175,21 +177,21 @@ function setConsumerKey(key) {
 }
 
 /**
- * @return String Project key
+ * @return String Script ID
  */
-function getProjectKey() {
-  var key = scriptProperties.getProperty(PROJECT_KEY_PROPERTY_NAME);
+function getScriptID() {
+  var key = scriptProperties.getProperty(SCRIPT_ID_PROPERTY_NAME);
   if (key == null) {
     key = "";
   }
-  return key;
+  return key;		 
 }
 
 /**
- * @param String Project key
+ * @param String Script ID
  */
-function setProjectKey(key) {
-  scriptProperties.setProperty(PROJECT_KEY_PROPERTY_NAME, key);
+function setScriptID(key) {
+  scriptProperties.setProperty(SCRIPT_ID_PROPERTY_NAME, key);
 }
 
 /**
@@ -250,7 +252,7 @@ function saveConfiguration(e) {
 
     setConsumerKey(e.parameter.clientID);
     setConsumerSecret(e.parameter.consumerSecret);
-    setProjectKey(e.parameter.projectKey);
+    setScriptID(e.parameter.scriptID);
     setLoggables(e.parameter.loggables);
     setPeriod(e.parameter.period);
     var app = UiApp.getActiveApplication();
@@ -288,11 +290,11 @@ function renderFitbitConfigurationDialog() {
   consumerSecret.setName("consumerSecret");
   consumerSecret.setWidth("100%");
   consumerSecret.setText(getConsumerSecret());
-  var projectKeyLabel = app.createLabel("Project Key:");
-  var projectKey = app.createTextBox();
-  projectKey.setName("projectKey");
-  projectKey.setWidth("100%");
-  projectKey.setText(getProjectKey());
+  var scriptIDLabel = app.createLabel("Script ID:");
+  var scriptID = app.createTextBox();
+  scriptID.setName("scriptID");
+  scriptID.setWidth("100%");
+  scriptID.setText(getScriptID());
 
   var saveHandler = app.createServerClickHandler("saveConfiguration");
   var saveButton = app.createButton("Save Configuration", saveHandler);
@@ -302,8 +304,8 @@ function renderFitbitConfigurationDialog() {
   listPanel.setWidget(1, 1, consumerKey);
   listPanel.setWidget(2, 0, consumerSecretLabel);
   listPanel.setWidget(2, 1, consumerSecret);
-  listPanel.setWidget(3, 0, projectKeyLabel);
-  listPanel.setWidget(3, 1, projectKey);
+  listPanel.setWidget(3, 0, scriptIDLabel);
+  listPanel.setWidget(3, 1, scriptID);
 
   // add checkboxes to select loggables
   var loggables = app.createListBox(true).setId("loggables").setName("loggables");
@@ -355,8 +357,8 @@ function getService() {
       .setAuthorizationBaseUrl('https://www.fitbit.com/oauth2/authorize')
       .setTokenUrl('https://api.fitbit.com/oauth2/token')
       .setClientId(getConsumerKey())
-      .setClientSecret(getConsumerSecret())
-      .setProjectKey(getProjectKey())
+      .setClientSecret(getConsumerSecret())						 
+									 
       .setCallbackFunction('fitbitAuthCallback')
       .setPropertyStore(PropertiesService.getScriptProperties())
       .setScope('activity')
